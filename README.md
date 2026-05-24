@@ -1,5 +1,7 @@
 # Shopping Manager
 
+[![CI](https://github.com/Gabb-c/shopping-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Gabb-c/shopping-manager/actions/workflows/ci.yml)
+
 Gerenciador de lojas de um shopping center, escrito em **Java puro** (sem Maven/Gradle,
 sem `package`, todos os `.java` na raiz). Desafio final da disciplina **Laboratório I**
 (Unisinos, 2023/1), desenvolvido em quatro etapas: classes básicas, associação,
@@ -87,6 +89,22 @@ etapas com **`[OK]` em todas as linhas**.
   com `insereProduto`, `removeProduto` e `imprimeProdutos`.
 - **`Shopping`** — array de lojas com `insereLoja`, `removeLoja`,
   `quantidadeLojasPorTipo(String)` (via `instanceof`) e `lojaSeguroMaisCaro()`.
+
+## Integração contínua e releases
+
+- **CI** (`.github/workflows/ci.yml`) — a cada push na `main` ou pull request,
+  compila o projeto e roda os 4 validadores, falhando se aparecer qualquer `[NOK]`.
+- **Release** (`.github/workflows/release.yml`) — disparada ao publicar uma **tag de
+  versão**. Revalida as etapas e anexa dois artefatos à release:
+  - `shopping-manager.jar` — executável (`java -jar shopping-manager.jar`);
+  - `shopping-manager-src.zip` — código-fonte + validadores.
+
+Para gerar uma release:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Convenções
 

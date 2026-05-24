@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Validar, empacotar e publicar release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compilar (src + validadores)
+        run: javac -d out src/*.java validators/*.java
+
+      - name: Rodar os 4 validadores (gate)
+        run: |
+          fail=0
+          for n in 1 2 3 4; do
+            echo "::group::ValidadorEtapa$n"
+            saida=$(java -cp out "ValidadorEtapa$n")
+            echo "$saida"
+            echo "::endgroup::"
+            if echo "$saida" | grep -q '\[NOK\]'; then
+              echo "::error::ValidadorEtapa$n encontrou [NOK]"
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "Release abortada: algum validador falhou."
+            exit 1
+          fi
+
+      - name: Gerar JAR executavel
+        run: |
+          mkdir -p app
+          javac -d app src/*.java
+          jar --create --file shopping-manager.jar --main-class Principal -C app .
+
+      - name: Gerar zip de fontes
+        run: zip -rq shopping-manager-src.zip src validators README.md Makefile .gitignore
+
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            shopping-manager.jar
+            shopping-manager-src.zip
+          generate_release_notes: true

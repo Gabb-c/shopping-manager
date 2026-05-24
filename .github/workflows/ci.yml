@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    name: Compilar e validar etapas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compilar (src + validadores)
+        run: javac -d out src/*.java validators/*.java
+
+      - name: Rodar os 4 validadores
+        run: |
+          fail=0
+          for n in 1 2 3 4; do
+            echo "::group::ValidadorEtapa$n"
+            saida=$(java -cp out "ValidadorEtapa$n")
+            echo "$saida"
+            echo "::endgroup::"
+            if echo "$saida" | grep -q '\[NOK\]'; then
+              echo "::error::ValidadorEtapa$n encontrou [NOK]"
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "Pelo menos um validador falhou."
+            exit 1
+          fi
+          echo "Todos os validadores passaram com [OK]."
